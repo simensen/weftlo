@@ -1,0 +1,47 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: false
+      exclude-functions:
+        - (io.Closer).Close
+        - (io.ReadCloser).Close
+        - (fmt).Fprint
+        - (fmt).Fprintf
+        - (fmt).Fprintln
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
+        - io.WriteString
+  exclusions:
+    rules:
+      # Exclude errcheck in test files - common practice
+      - path: "_test\\.go$"
+        linters:
+          - errcheck
+      # Exclude staticcheck style suggestions in tests
+      - path: "_test\\.go$"
+        linters:
+          - staticcheck
+        text: "S1030|ST1023|QF1001|QF1003|QF1011|SA4023|SA5011"
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/simensen/weftlo
