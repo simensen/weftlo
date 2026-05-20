@@ -3,7 +3,12 @@ package config
 
 // DefaultInstallPrefix is the default value for InstallPrefix when not specified
 // or empty in the project configuration file.
-const DefaultInstallPrefix = "weftlo"
+//
+// The default is ".claude/" because weftlo's primary use case is managing
+// configuration for AI coding assistants, and Claude Code (among others)
+// reads from .claude/. Projects that prefer a different location can set
+// install_prefix explicitly in .weftlo.yaml.
+const DefaultInstallPrefix = ".claude"
 
 // ProjectConfig represents the raw content of the project configuration file (.weftlo.yaml)
 // as loaded from a project's root directory.
@@ -20,7 +25,7 @@ type ProjectConfig struct {
 	// This path is joined with each template's SourcePath to compute the TargetPath.
 	// Supports multi-level paths (e.g., ".claude/my-project"), absolute paths (e.g., "/srv/config"),
 	// and relative paths (e.g., "../../shared-config").
-	// Defaults to "weftlo" when empty or not specified.
+	// Defaults to ".claude" when empty or not specified.
 	InstallPrefix string `yaml:"install_prefix,omitempty"`
 
 	// Variables contains custom key-value pairs that can be used in templates.

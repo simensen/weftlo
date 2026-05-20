@@ -170,7 +170,7 @@ func TestStatusCommand_ManifestJSONCorrectlyParsed(t *testing.T) {
 		Profiles:    []string{"default/default"},
 		GeneratedAt: expectedTime,
 		Files: map[string]manifest.ManifestFile{
-			"weftlo/CLAUDE.md": {
+			".claude/CLAUDE.md": {
 				SourceChecksum: "abc123",
 				OutputChecksum: "def456",
 				SourceProfile:  "default/default",
@@ -374,8 +374,8 @@ func TestStatusCommand_DefaultInstallPrefixWhenNotSpecified(t *testing.T) {
 	err = json.Unmarshal([]byte(stdout.String()), &result)
 	require.NoError(t, err)
 
-	// Verify default install prefix ("weftlo") is used
-	assert.Equal(t, "weftlo", result.InstallPrefix)
+	// Verify the default install prefix (".claude") is used.
+	assert.Equal(t, ".claude", result.InstallPrefix)
 }
 
 // =============================================================================
@@ -418,27 +418,27 @@ func TestStatusCommand_FilesCategorizedByStatus(t *testing.T) {
 
 	// Create manifest with files in various states (paths include weftlo/ prefix)
 	setupStatusTestManifest(t, memFs, projectDir, "default/default", map[string]manifest.ManifestFile{
-		"weftlo/unchanged.md": {
+		".claude/unchanged.md": {
 			SourceChecksum: unchangedChecksum,
 			OutputChecksum: unchangedChecksum,
 			SourceProfile:  "default/default",
 		},
-		"weftlo/source_changed.md": {
+		".claude/source_changed.md": {
 			SourceChecksum: originalSourceChangedChecksum, // Source will differ
 			OutputChecksum: originalSourceChangedChecksum, // Output still matches manifest
 			SourceProfile:  "default/default",
 		},
-		"weftlo/user_modified.md": {
+		".claude/user_modified.md": {
 			SourceChecksum: userModifiedChecksum,                                   // Source matches
 			OutputChecksum: manifest.ComputeChecksum([]byte("# Different output")), // Output differs
 			SourceProfile:  "default/default",
 		},
-		"weftlo/conflict.md": {
+		".claude/conflict.md": {
 			SourceChecksum: originalConflictChecksum,                                   // Source differs
 			OutputChecksum: manifest.ComputeChecksum([]byte("# Old conflict content")), // Output differs
 			SourceProfile:  "default/default",
 		},
-		"weftlo/removed.md": {
+		".claude/removed.md": {
 			SourceChecksum: removedChecksum,
 			OutputChecksum: removedChecksum,
 			SourceProfile:  "default/default",
@@ -447,14 +447,14 @@ func TestStatusCommand_FilesCategorizedByStatus(t *testing.T) {
 	})
 
 	// Create output files in weftlo/ directory
-	_ = memFs.MkdirAll(filepath.Join(projectDir, "weftlo"), 0755)
-	_ = afero.WriteFile(memFs, filepath.Join(projectDir, "weftlo", "unchanged.md"), []byte(unchangedContent), 0644)
-	_ = afero.WriteFile(memFs, filepath.Join(projectDir, "weftlo", "source_changed.md"), []byte(originalSourceChangedContent), 0644)
-	_ = afero.WriteFile(memFs, filepath.Join(projectDir, "weftlo", "user_modified.md"), []byte("# User modified content"), 0644)
-	_ = afero.WriteFile(memFs, filepath.Join(projectDir, "weftlo", "conflict.md"), []byte("# User modified conflict"), 0644)
+	_ = memFs.MkdirAll(filepath.Join(projectDir, ".claude"), 0755)
+	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".claude", "unchanged.md"), []byte(unchangedContent), 0644)
+	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".claude", "source_changed.md"), []byte(originalSourceChangedContent), 0644)
+	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".claude", "user_modified.md"), []byte("# User modified content"), 0644)
+	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".claude", "conflict.md"), []byte("# User modified conflict"), 0644)
 	// new.md does not exist in project yet
 	// removed.md is in manifest but not in profile, so we create it to see it's detected
-	_ = afero.WriteFile(memFs, filepath.Join(projectDir, "weftlo", "removed.md"), []byte("# Removed content"), 0644)
+	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".claude", "removed.md"), []byte("# Removed content"), 0644)
 
 	var stdout bytes.Buffer
 	cmd := cli.NewStatusCommandForTesting(memFs, func() (string, error) {
@@ -471,12 +471,12 @@ func TestStatusCommand_FilesCategorizedByStatus(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify files are categorized correctly (paths include weftlo/ prefix)
-	assert.Contains(t, result.Files["unchanged"], "weftlo/unchanged.md", "unchanged.md should be in unchanged category")
-	assert.Contains(t, result.Files["source_changed"], "weftlo/source_changed.md", "source_changed.md should be in source_changed category")
-	assert.Contains(t, result.Files["user_modified"], "weftlo/user_modified.md", "user_modified.md should be in user_modified category")
-	assert.Contains(t, result.Files["conflict"], "weftlo/conflict.md", "conflict.md should be in conflict category")
-	assert.Contains(t, result.Files["new"], "weftlo/new.md", "new.md should be in new category")
-	assert.Contains(t, result.Files["removed"], "weftlo/removed.md", "removed.md should be in removed category")
+	assert.Contains(t, result.Files["unchanged"], ".claude/unchanged.md", "unchanged.md should be in unchanged category")
+	assert.Contains(t, result.Files["source_changed"], ".claude/source_changed.md", "source_changed.md should be in source_changed category")
+	assert.Contains(t, result.Files["user_modified"], ".claude/user_modified.md", "user_modified.md should be in user_modified category")
+	assert.Contains(t, result.Files["conflict"], ".claude/conflict.md", "conflict.md should be in conflict category")
+	assert.Contains(t, result.Files["new"], ".claude/new.md", "new.md should be in new category")
+	assert.Contains(t, result.Files["removed"], ".claude/removed.md", "removed.md should be in removed category")
 }
 
 // Test 3.1.2: All file paths are collected per category
@@ -508,16 +508,16 @@ func TestStatusCommand_AllFilePathsCollectedPerCategory(t *testing.T) {
 
 	// Create manifest with all files unchanged (paths include weftlo/ prefix)
 	setupStatusTestManifest(t, memFs, projectDir, "default/default", map[string]manifest.ManifestFile{
-		"weftlo/file1.md": {SourceChecksum: checksum1, OutputChecksum: checksum1, SourceProfile: "default/default"},
-		"weftlo/file2.md": {SourceChecksum: checksum2, OutputChecksum: checksum2, SourceProfile: "default/default"},
-		"weftlo/file3.md": {SourceChecksum: checksum3, OutputChecksum: checksum3, SourceProfile: "default/default"},
+		".claude/file1.md": {SourceChecksum: checksum1, OutputChecksum: checksum1, SourceProfile: "default/default"},
+		".claude/file2.md": {SourceChecksum: checksum2, OutputChecksum: checksum2, SourceProfile: "default/default"},
+		".claude/file3.md": {SourceChecksum: checksum3, OutputChecksum: checksum3, SourceProfile: "default/default"},
 	})
 
 	// Create output files in weftlo/ directory matching the source
-	_ = memFs.MkdirAll(filepath.Join(projectDir, "weftlo"), 0755)
-	_ = afero.WriteFile(memFs, filepath.Join(projectDir, "weftlo", "file1.md"), []byte(content1), 0644)
-	_ = afero.WriteFile(memFs, filepath.Join(projectDir, "weftlo", "file2.md"), []byte(content2), 0644)
-	_ = afero.WriteFile(memFs, filepath.Join(projectDir, "weftlo", "file3.md"), []byte(content3), 0644)
+	_ = memFs.MkdirAll(filepath.Join(projectDir, ".claude"), 0755)
+	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".claude", "file1.md"), []byte(content1), 0644)
+	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".claude", "file2.md"), []byte(content2), 0644)
+	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".claude", "file3.md"), []byte(content3), 0644)
 
 	var stdout bytes.Buffer
 	cmd := cli.NewStatusCommandForTesting(memFs, func() (string, error) {
@@ -535,9 +535,9 @@ func TestStatusCommand_AllFilePathsCollectedPerCategory(t *testing.T) {
 
 	// Verify all files are collected in unchanged category (paths include weftlo/ prefix)
 	require.Len(t, result.Files["unchanged"], 3, "should have 3 unchanged files")
-	assert.Contains(t, result.Files["unchanged"], "weftlo/file1.md")
-	assert.Contains(t, result.Files["unchanged"], "weftlo/file2.md")
-	assert.Contains(t, result.Files["unchanged"], "weftlo/file3.md")
+	assert.Contains(t, result.Files["unchanged"], ".claude/file1.md")
+	assert.Contains(t, result.Files["unchanged"], ".claude/file2.md")
+	assert.Contains(t, result.Files["unchanged"], ".claude/file3.md")
 }
 
 // Test 3.1.3: Change detection is skipped when profile is missing
@@ -672,7 +672,7 @@ func TestStatusCommand_StatusResultHasAllFields(t *testing.T) {
 		Profiles:    []string{"default/default"},
 		GeneratedAt: expectedTime,
 		Files: map[string]manifest.ManifestFile{
-			"weftlo/test.md": {
+			".claude/test.md": {
 				SourceChecksum: checksum,
 				OutputChecksum: checksum,
 				SourceProfile:  "default/default",
@@ -683,8 +683,8 @@ func TestStatusCommand_StatusResultHasAllFields(t *testing.T) {
 	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".weftlo.manifest.json"), data, 0644)
 
 	// Create output file in weftlo/ directory
-	_ = memFs.MkdirAll(filepath.Join(projectDir, "weftlo"), 0755)
-	_ = afero.WriteFile(memFs, filepath.Join(projectDir, "weftlo", "test.md"), []byte(content), 0644)
+	_ = memFs.MkdirAll(filepath.Join(projectDir, ".claude"), 0755)
+	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".claude", "test.md"), []byte(content), 0644)
 
 	var stdout bytes.Buffer
 	cmd := cli.NewStatusCommandForTesting(memFs, func() (string, error) {
@@ -743,17 +743,17 @@ func TestStatusCommand_HumanReadableOutputFormatMatchesSpec(t *testing.T) {
 		Profiles:    []string{"default/default"},
 		GeneratedAt: expectedTime,
 		Files: map[string]manifest.ManifestFile{
-			"weftlo/CLAUDE.md":          {SourceChecksum: checksum1, OutputChecksum: checksum1, SourceProfile: "default/default"},
-			"weftlo/commands/commit.md": {SourceChecksum: checksum2, OutputChecksum: checksum2, SourceProfile: "default/default"},
+			".claude/CLAUDE.md":          {SourceChecksum: checksum1, OutputChecksum: checksum1, SourceProfile: "default/default"},
+			".claude/commands/commit.md": {SourceChecksum: checksum2, OutputChecksum: checksum2, SourceProfile: "default/default"},
 		},
 	}
 	data, _ := json.MarshalIndent(m, "", "  ")
 	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".weftlo.manifest.json"), data, 0644)
 
 	// Create output files at the install prefix location
-	_ = memFs.MkdirAll(filepath.Join(projectDir, "weftlo/commands"), 0755)
-	_ = afero.WriteFile(memFs, filepath.Join(projectDir, "weftlo/CLAUDE.md"), []byte(content1), 0644)
-	_ = afero.WriteFile(memFs, filepath.Join(projectDir, "weftlo/commands/commit.md"), []byte(content2), 0644)
+	_ = memFs.MkdirAll(filepath.Join(projectDir, ".claude/commands"), 0755)
+	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".claude/CLAUDE.md"), []byte(content1), 0644)
+	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".claude/commands/commit.md"), []byte(content2), 0644)
 
 	var stdout bytes.Buffer
 	cmd := cli.NewStatusCommandForTesting(memFs, func() (string, error) {
@@ -800,14 +800,14 @@ func TestStatusCommand_JSONOutputMatchesSpecStructure(t *testing.T) {
 		Profiles:    []string{"default/default"},
 		GeneratedAt: expectedTime,
 		Files: map[string]manifest.ManifestFile{
-			"weftlo/test.md": {SourceChecksum: checksum, OutputChecksum: checksum, SourceProfile: "default/default"},
+			".claude/test.md": {SourceChecksum: checksum, OutputChecksum: checksum, SourceProfile: "default/default"},
 		},
 	}
 	data, _ := json.MarshalIndent(m, "", "  ")
 	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".weftlo.manifest.json"), data, 0644)
 
-	_ = memFs.MkdirAll(filepath.Join(projectDir, "weftlo"), 0755)
-	_ = afero.WriteFile(memFs, filepath.Join(projectDir, "weftlo", "test.md"), []byte(content), 0644)
+	_ = memFs.MkdirAll(filepath.Join(projectDir, ".claude"), 0755)
+	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".claude", "test.md"), []byte(content), 0644)
 
 	var stdout bytes.Buffer
 	cmd := cli.NewStatusCommandForTesting(memFs, func() (string, error) {
@@ -863,13 +863,13 @@ func TestStatusCommand_QuietModeSuppressesAllOutput(t *testing.T) {
 		Profiles:    []string{"default/default"},
 		GeneratedAt: time.Now().UTC(),
 		Files: map[string]manifest.ManifestFile{
-			"weftlo/test.md": {SourceChecksum: checksum, OutputChecksum: checksum, SourceProfile: "default/default"},
+			".claude/test.md": {SourceChecksum: checksum, OutputChecksum: checksum, SourceProfile: "default/default"},
 		},
 	}
 	data, _ := json.MarshalIndent(m, "", "  ")
 	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".weftlo.manifest.json"), data, 0644)
-	_ = memFs.MkdirAll(filepath.Join(projectDir, "weftlo"), 0755)
-	_ = afero.WriteFile(memFs, filepath.Join(projectDir, "weftlo", "test.md"), []byte(content), 0644)
+	_ = memFs.MkdirAll(filepath.Join(projectDir, ".claude"), 0755)
+	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".claude", "test.md"), []byte(content), 0644)
 
 	var stdout bytes.Buffer
 	cmd := cli.NewStatusCommandForTesting(memFs, func() (string, error) {
@@ -1058,17 +1058,17 @@ func TestStatusCommand_MultipleProfilesInstallation(t *testing.T) {
 		Profiles:    []string{"acme/frontend", "acme/backend"},
 		GeneratedAt: time.Date(2024, 3, 20, 14, 0, 0, 0, time.UTC),
 		Files: map[string]manifest.ManifestFile{
-			"weftlo/frontend.md": {SourceChecksum: frontendChecksum, OutputChecksum: frontendChecksum, SourceProfile: "acme/frontend"},
-			"weftlo/backend.md":  {SourceChecksum: backendChecksum, OutputChecksum: backendChecksum, SourceProfile: "acme/backend"},
+			".claude/frontend.md": {SourceChecksum: frontendChecksum, OutputChecksum: frontendChecksum, SourceProfile: "acme/frontend"},
+			".claude/backend.md":  {SourceChecksum: backendChecksum, OutputChecksum: backendChecksum, SourceProfile: "acme/backend"},
 		},
 	}
 	data, _ := json.MarshalIndent(m, "", "  ")
 	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".weftlo.manifest.json"), data, 0644)
 
 	// Create output files at the install prefix location
-	_ = memFs.MkdirAll(filepath.Join(projectDir, "weftlo"), 0755)
-	_ = afero.WriteFile(memFs, filepath.Join(projectDir, "weftlo/frontend.md"), []byte(frontendContent), 0644)
-	_ = afero.WriteFile(memFs, filepath.Join(projectDir, "weftlo/backend.md"), []byte(backendContent), 0644)
+	_ = memFs.MkdirAll(filepath.Join(projectDir, ".claude"), 0755)
+	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".claude/frontend.md"), []byte(frontendContent), 0644)
+	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".claude/backend.md"), []byte(backendContent), 0644)
 
 	var stdout bytes.Buffer
 	cmd := cli.NewStatusCommandForTesting(memFs, func() (string, error) {
@@ -1091,8 +1091,8 @@ func TestStatusCommand_MultipleProfilesInstallation(t *testing.T) {
 
 	// Verify files from both profiles are tracked (paths include install prefix)
 	assert.Len(t, result.Files["unchanged"], 2, "should have 2 unchanged files")
-	assert.Contains(t, result.Files["unchanged"], "weftlo/frontend.md")
-	assert.Contains(t, result.Files["unchanged"], "weftlo/backend.md")
+	assert.Contains(t, result.Files["unchanged"], ".claude/frontend.md")
+	assert.Contains(t, result.Files["unchanged"], ".claude/backend.md")
 
 	// No warnings expected
 	assert.Empty(t, result.Warnings, "should have no warnings")
@@ -1172,16 +1172,16 @@ func TestStatusCommand_AllFilesInConflict(t *testing.T) {
 	oldChecksum3 := manifest.ComputeChecksum([]byte("# Old source 3"))
 
 	setupStatusTestManifest(t, memFs, projectDir, "default/default", map[string]manifest.ManifestFile{
-		"weftlo/file1.md": {SourceChecksum: oldChecksum1, OutputChecksum: oldChecksum1, SourceProfile: "default/default"},
-		"weftlo/file2.md": {SourceChecksum: oldChecksum2, OutputChecksum: oldChecksum2, SourceProfile: "default/default"},
-		"weftlo/file3.md": {SourceChecksum: oldChecksum3, OutputChecksum: oldChecksum3, SourceProfile: "default/default"},
+		".claude/file1.md": {SourceChecksum: oldChecksum1, OutputChecksum: oldChecksum1, SourceProfile: "default/default"},
+		".claude/file2.md": {SourceChecksum: oldChecksum2, OutputChecksum: oldChecksum2, SourceProfile: "default/default"},
+		".claude/file3.md": {SourceChecksum: oldChecksum3, OutputChecksum: oldChecksum3, SourceProfile: "default/default"},
 	})
 
 	// Create output files in weftlo/ with USER modifications (different from both old and new source)
-	_ = memFs.MkdirAll(filepath.Join(projectDir, "weftlo"), 0755)
-	_ = afero.WriteFile(memFs, filepath.Join(projectDir, "weftlo", "file1.md"), []byte("# User edit 1"), 0644)
-	_ = afero.WriteFile(memFs, filepath.Join(projectDir, "weftlo", "file2.md"), []byte("# User edit 2"), 0644)
-	_ = afero.WriteFile(memFs, filepath.Join(projectDir, "weftlo", "file3.md"), []byte("# User edit 3"), 0644)
+	_ = memFs.MkdirAll(filepath.Join(projectDir, ".claude"), 0755)
+	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".claude", "file1.md"), []byte("# User edit 1"), 0644)
+	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".claude", "file2.md"), []byte("# User edit 2"), 0644)
+	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".claude", "file3.md"), []byte("# User edit 3"), 0644)
 
 	var stdout bytes.Buffer
 	cmd := cli.NewStatusCommandForTesting(memFs, func() (string, error) {
@@ -1199,9 +1199,9 @@ func TestStatusCommand_AllFilesInConflict(t *testing.T) {
 
 	// All 3 files should be in conflict (source changed AND output modified)
 	assert.Len(t, result.Files["conflict"], 3, "all 3 files should be in conflict")
-	assert.Contains(t, result.Files["conflict"], "weftlo/file1.md")
-	assert.Contains(t, result.Files["conflict"], "weftlo/file2.md")
-	assert.Contains(t, result.Files["conflict"], "weftlo/file3.md")
+	assert.Contains(t, result.Files["conflict"], ".claude/file1.md")
+	assert.Contains(t, result.Files["conflict"], ".claude/file2.md")
+	assert.Contains(t, result.Files["conflict"], ".claude/file3.md")
 
 	// No files in other categories
 	assert.Empty(t, result.Files["unchanged"], "should have no unchanged files")
@@ -1246,20 +1246,20 @@ func TestStatusCommand_HumanReadableFileCountsAccurate(t *testing.T) {
 	checksum5 := manifest.ComputeChecksum([]byte(content5))
 
 	setupStatusTestManifest(t, memFs, projectDir, "default/default", map[string]manifest.ManifestFile{
-		"weftlo/file1.md": {SourceChecksum: checksum1, OutputChecksum: checksum1, SourceProfile: "default/default"},
-		"weftlo/file2.md": {SourceChecksum: checksum2, OutputChecksum: checksum2, SourceProfile: "default/default"},
-		"weftlo/file3.md": {SourceChecksum: checksum3, OutputChecksum: checksum3, SourceProfile: "default/default"},
-		"weftlo/file4.md": {SourceChecksum: checksum4, OutputChecksum: checksum4, SourceProfile: "default/default"},
-		"weftlo/file5.md": {SourceChecksum: checksum5, OutputChecksum: checksum5, SourceProfile: "default/default"},
+		".claude/file1.md": {SourceChecksum: checksum1, OutputChecksum: checksum1, SourceProfile: "default/default"},
+		".claude/file2.md": {SourceChecksum: checksum2, OutputChecksum: checksum2, SourceProfile: "default/default"},
+		".claude/file3.md": {SourceChecksum: checksum3, OutputChecksum: checksum3, SourceProfile: "default/default"},
+		".claude/file4.md": {SourceChecksum: checksum4, OutputChecksum: checksum4, SourceProfile: "default/default"},
+		".claude/file5.md": {SourceChecksum: checksum5, OutputChecksum: checksum5, SourceProfile: "default/default"},
 	})
 
 	// Create all 5 output files unchanged in weftlo/ directory
-	_ = memFs.MkdirAll(filepath.Join(projectDir, "weftlo"), 0755)
-	_ = afero.WriteFile(memFs, filepath.Join(projectDir, "weftlo", "file1.md"), []byte(content1), 0644)
-	_ = afero.WriteFile(memFs, filepath.Join(projectDir, "weftlo", "file2.md"), []byte(content2), 0644)
-	_ = afero.WriteFile(memFs, filepath.Join(projectDir, "weftlo", "file3.md"), []byte(content3), 0644)
-	_ = afero.WriteFile(memFs, filepath.Join(projectDir, "weftlo", "file4.md"), []byte(content4), 0644)
-	_ = afero.WriteFile(memFs, filepath.Join(projectDir, "weftlo", "file5.md"), []byte(content5), 0644)
+	_ = memFs.MkdirAll(filepath.Join(projectDir, ".claude"), 0755)
+	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".claude", "file1.md"), []byte(content1), 0644)
+	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".claude", "file2.md"), []byte(content2), 0644)
+	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".claude", "file3.md"), []byte(content3), 0644)
+	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".claude", "file4.md"), []byte(content4), 0644)
+	_ = afero.WriteFile(memFs, filepath.Join(projectDir, ".claude", "file5.md"), []byte(content5), 0644)
 
 	var stdout bytes.Buffer
 	cmd := cli.NewStatusCommandForTesting(memFs, func() (string, error) {
@@ -1274,11 +1274,11 @@ func TestStatusCommand_HumanReadableFileCountsAccurate(t *testing.T) {
 
 	// Verify the count shows 5 unchanged files (paths include weftlo/ prefix)
 	assert.Contains(t, output, "Unchanged (5):", "should show count of 5 unchanged files")
-	assert.Contains(t, output, "weftlo/file1.md", "should list file1.md")
-	assert.Contains(t, output, "weftlo/file2.md", "should list file2.md")
-	assert.Contains(t, output, "weftlo/file3.md", "should list file3.md")
-	assert.Contains(t, output, "weftlo/file4.md", "should list file4.md")
-	assert.Contains(t, output, "weftlo/file5.md", "should list file5.md")
+	assert.Contains(t, output, ".claude/file1.md", "should list file1.md")
+	assert.Contains(t, output, ".claude/file2.md", "should list file2.md")
+	assert.Contains(t, output, ".claude/file3.md", "should list file3.md")
+	assert.Contains(t, output, ".claude/file4.md", "should list file4.md")
+	assert.Contains(t, output, ".claude/file5.md", "should list file5.md")
 }
 
 // Test 5.3.5: Deep inheritance chain (3 levels)

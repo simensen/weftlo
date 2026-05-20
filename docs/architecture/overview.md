@@ -386,7 +386,7 @@ variables:
 
 ```yaml
 # profiles/<vendor>/<name>/content.yaml
-default_target: weftlo
+default_target: .claude
 
 targets:
   skills: .claude/skills/
@@ -548,7 +548,7 @@ Files are routed to named target directories:
 
 ```yaml
 # content.yaml
-default_target: weftlo
+default_target: .claude
 
 targets:
   skills: .claude/skills/

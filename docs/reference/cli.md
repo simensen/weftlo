@@ -129,7 +129,7 @@ The profile is resolved in this order:
 The install prefix (target directory) is resolved in this order:
 1. `--install-prefix` flag (if specified)
 2. `~/.config/weftlo/config.yaml` install_prefix (if set)
-3. Default: `weftlo`
+3. Default: `.claude`
 
 ### Flags
 

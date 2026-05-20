@@ -94,7 +94,7 @@ type globalConfig struct {
 	InstallPrefix  string `yaml:"install_prefix,omitempty"`
 }
 
-// profileConfig represents the structure of profile.yaml
+// profileConfig represents the structure of profile.yaml.
 type profileConfig struct {
 	Name string `yaml:"name"`
 }
@@ -229,9 +229,11 @@ func (c *InitCommand) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Create README.md inside content/ directory
-	readmePath := filepath.Join(contentDir, "README.md")
-	if err := c.createReadme(readmePath); err != nil {
+	// Create a hello-world CLAUDE.md.tmpl inside content/ so that
+	// `weftlo install` produces something visible in .claude/ that the
+	// user can immediately recognize as "this is where my AI rules go."
+	templatePath := filepath.Join(contentDir, "CLAUDE.md.tmpl")
+	if err := c.createDefaultTemplate(templatePath); err != nil {
 		return err
 	}
 
@@ -346,17 +348,25 @@ func (c *InitCommand) createConfigYaml(path string) error {
 }
 
 // createProfileYaml creates the profile.yaml file with default content.
+// It declares one variable (`company`) so the default template has something
+// to interpolate, and includes an inline comment showing the user where and
+// how to add more variables. This is intentionally hand-formatted rather than
+// going through yaml.Marshal so that the comments are preserved verbatim.
 func (c *InitCommand) createProfileYaml(path string) error {
-	profile := profileConfig{
-		Name: "default/default",
-	}
-
-	data, err := yaml.Marshal(&profile)
+	// Marshal the name field through the YAML library so any future field
+	// renames stay in sync with the struct tags.
+	header, err := yaml.Marshal(&profileConfig{Name: "default/default"})
 	if err != nil {
 		return err
 	}
 
-	if err := afero.WriteFile(c.fs, path, data, 0644); err != nil {
+	content := string(header) + `variables:
+  company: "Your Company"
+  # Add your own variables here, then reference them in templates
+  # as {{ .Variables.your_var_name }}.
+`
+
+	if err := afero.WriteFile(c.fs, path, []byte(content), 0644); err != nil {
 		return &PermissionError{
 			Path: path,
 			Err:  err,
@@ -373,18 +383,25 @@ func (c *InitCommand) createProfileYaml(path string) error {
 	return nil
 }
 
-// createReadme creates the README.md file with a note about the default profile.
-// This file is placed inside the content/ subdirectory as part of the
-// content root architecture.
-func (c *InitCommand) createReadme(path string) error {
-	content := `# Default Profile
+// createDefaultTemplate creates content/CLAUDE.md.tmpl — a neutral hello-world
+// template that, after `weftlo install`, lands at `.claude/CLAUDE.md` with the
+// `company` variable substituted in. The goal is for the user to see, in the
+// first 60 seconds, where their AI rules live and how variables work.
+func (c *InitCommand) createDefaultTemplate(path string) error {
+	content := `# Coding Standards for {{ .Variables.company | default "this project" }}
 
-This is the default profile for weftlo.
+<!--
+This file is rendered from your weftlo profile.
 
-This profile was created during initialization and can be customized to fit your needs.
+Edit the template at the default profile's content/CLAUDE.md.tmpl and
+re-run ` + "`weftlo update`" + ` to sync changes into your project.
 
-Place your content files in this directory. They will be installed to your project
-when you run 'weftlo install'.
+Variables come from the profile.yaml ` + "`variables:`" + ` block, your
+project's .weftlo.yaml, or the global config. See the weftlo docs for
+the full precedence order.
+-->
+
+<!-- Add your coding standards, conventions, and AI-assistant instructions here. -->
 `
 
 	if err := afero.WriteFile(c.fs, path, []byte(content), 0644); err != nil {

@@ -137,7 +137,7 @@ variables:
 
 ```yaml
 # Default target directory for files without explicit routing
-default_target: weftlo
+default_target: .claude
 
 # Named target directories
 targets:
@@ -173,7 +173,7 @@ targets:
 
 - `content/skills/coding.md` → `.claude/skills/coding.md`
 - `content/commands/build.md` → `.claude/commands/build.md`
-- `content/other.md` → `weftlo/other.md` (default target)
+- `content/other.md` → `.claude/other.md` (default target)
 
 ## Profile Inheritance
 
@@ -491,7 +491,7 @@ Later patterns can negate earlier patterns using `!`.
 
 ```yaml
 # content.yaml
-default_target: weftlo
+default_target: .claude
 
 targets:
   skills: .claude/skills/
@@ -507,7 +507,7 @@ Files are matched by path prefix to targets:
 |-------------|--------|----------------|
 | `skills/coding.md` | `skills` | `.claude/skills/coding.md` |
 | `commands/build.md` | `commands` | `.claude/commands/build.md` |
-| `README.md` | (default) | `weftlo/README.md` |
+| `README.md` | (default) | `.claude/README.md` |
 
 ### Target Overrides
 

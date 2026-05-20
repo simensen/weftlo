@@ -9,7 +9,12 @@ const DefaultContentRoot = "content"
 // DefaultTargetPath is the default installation target path for content that does not
 // have a specific target mapping. Content without an explicit target in the Targets map
 // will be installed to this path relative to the project root.
-const DefaultTargetPath = "weftlo"
+//
+// This matches config.DefaultInstallPrefix — both express the same idea
+// ("where do unrouted files go by default?") and stay in sync at ".claude"
+// so the out-of-the-box experience lands files where AI coding assistants
+// actually look.
+const DefaultTargetPath = ".claude"
 
 // ContentConfig defines content routing configuration for a profile.
 // It specifies where installable content is located within the profile (Root),
@@ -83,7 +88,7 @@ type ContentConfig struct {
 
 	// DefaultTarget specifies the fallback installation target path for content
 	// subdirectories that are not explicitly mapped in Targets.
-	// When empty, defaults to DefaultTargetPath ("weftlo") during loading.
+	// When empty, defaults to DefaultTargetPath (".claude") during loading.
 	// Example values: "weftlo", ".claude", "configs"
 	//
 	// Note: DefaultTarget does not support template syntax. Use target_overrides

@@ -160,7 +160,7 @@ The install prefix is resolved in the following order:
   1. --install-prefix flag (if specified)
   2. .weftlo.yaml install_prefix (if exists)
   3. ~/.weftlo/config.yaml install_prefix (if set)
-  4. Default: "weftlo"
+  4. Default: ".claude"
 
 If .weftlo.yaml does not exist, it will be created after successful installation.`,
 		RunE: installCmd.run,

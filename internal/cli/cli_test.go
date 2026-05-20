@@ -390,9 +390,10 @@ func TestInitCommand_CreatesProfileYamlWithCorrectContent(t *testing.T) {
 	}
 }
 
-// Test 5: README.md creation inside content directory of default profile
-// Updated to reflect new content root architecture where README.md is inside content/
-func TestInitCommand_CreatesReadmeInDefaultProfile(t *testing.T) {
+// Test 5: hello-world CLAUDE.md.tmpl scaffolded inside content/ of the default profile.
+// The default profile must produce a visible rendered file after `weftlo install`,
+// so init now scaffolds a real template instead of an empty README.
+func TestInitCommand_CreatesDefaultTemplate(t *testing.T) {
 	memFs := afero.NewMemMapFs()
 	homeDir := "/home/testuser"
 
@@ -406,24 +407,36 @@ func TestInitCommand_CreatesReadmeInDefaultProfile(t *testing.T) {
 		t.Fatalf("expected no error, got: %v", err)
 	}
 
-	// Check that README.md exists inside content/ directory (new architecture)
-	readmePath := homeDir + "/.weftlo/profiles/default/default/content/README.md"
-	exists, err := afero.Exists(memFs, readmePath)
+	// Check that CLAUDE.md.tmpl exists inside content/
+	tmplPath := homeDir + "/.weftlo/profiles/default/default/content/CLAUDE.md.tmpl"
+	exists, err := afero.Exists(memFs, tmplPath)
+	if err != nil {
+		t.Fatalf("error checking CLAUDE.md.tmpl existence: %v", err)
+	}
+	if !exists {
+		t.Errorf("expected %s to exist", tmplPath)
+	}
+
+	// Read and verify it references the `company` variable so the user can
+	// see variable interpolation work after `install`.
+	content, err := afero.ReadFile(memFs, tmplPath)
+	if err != nil {
+		t.Fatalf("error reading CLAUDE.md.tmpl: %v", err)
+	}
+
+	if !bytes.Contains(content, []byte(".Variables.company")) {
+		t.Error("expected CLAUDE.md.tmpl to interpolate {{ .Variables.company }}")
+	}
+
+	// And the legacy README.md must not be scaffolded — keep the default
+	// profile minimal so the Quick Start payoff is unambiguous.
+	oldReadme := homeDir + "/.weftlo/profiles/default/default/content/README.md"
+	stillExists, err := afero.Exists(memFs, oldReadme)
 	if err != nil {
 		t.Fatalf("error checking README.md existence: %v", err)
 	}
-	if !exists {
-		t.Errorf("expected %s to exist", readmePath)
-	}
-
-	// Read and verify content contains expected note
-	content, err := afero.ReadFile(memFs, readmePath)
-	if err != nil {
-		t.Fatalf("error reading README.md: %v", err)
-	}
-
-	if !bytes.Contains(content, []byte("default")) {
-		t.Error("expected README.md to contain a note about the default profile")
+	if stillExists {
+		t.Errorf("expected legacy README.md to NOT be scaffolded at %s", oldReadme)
 	}
 }
 
@@ -850,7 +863,7 @@ func TestInitCommand_SuccessOutputDisplaysCreatedFiles(t *testing.T) {
 		"profiles",
 		"default/default",
 		"profile.yaml",
-		"README.md",
+		"CLAUDE.md.tmpl",
 	}
 
 	for _, item := range expectedItems {
@@ -1040,11 +1053,13 @@ func TestInitCommand_EndToEndFreshInstallViaRootCommand(t *testing.T) {
 		t.Fatalf("expected no error running init via root command, got: %v", err)
 	}
 
-	// Verify all expected files were created (README.md is now inside content/)
+	// Verify all expected files were created. The default profile scaffolds
+	// a hello-world CLAUDE.md.tmpl inside content/ so that `weftlo install`
+	// produces a visible rendered file.
 	expectedFiles := []string{
 		"/home/testuser/.weftlo/config.yaml",
 		"/home/testuser/.weftlo/profiles/default/default/profile.yaml",
-		"/home/testuser/.weftlo/profiles/default/default/content/README.md",
+		"/home/testuser/.weftlo/profiles/default/default/content/CLAUDE.md.tmpl",
 	}
 
 	for _, file := range expectedFiles {
@@ -1061,6 +1076,64 @@ func TestInitCommand_EndToEndFreshInstallViaRootCommand(t *testing.T) {
 	output := stdout.String()
 	if !strings.Contains(output, "successfully") {
 		t.Error("expected success message in output")
+	}
+}
+
+// TestInitThenInstall_ProducesRenderedClaudeMd is the core Quick Start
+// "first-60-seconds" assertion: after `weftlo init && weftlo install`, the
+// user must find a rendered file at .claude/CLAUDE.md with the company
+// variable substituted in. If this test ever fails, the value proposition
+// is broken at the most visible step in the docs.
+func TestInitThenInstall_ProducesRenderedClaudeMd(t *testing.T) {
+	memFs := afero.NewMemMapFs()
+	homeDir := "/home/testuser"
+	projectDir := "/projects/demo"
+
+	initCmd := cli.NewInitCommandWithHomeDir(memFs, func() (string, error) {
+		return homeDir, nil
+	})
+	initCmd.SetArgs([]string{})
+	if err := initCmd.Execute(); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+
+	if err := memFs.MkdirAll(projectDir, 0755); err != nil {
+		t.Fatalf("failed to create project dir: %v", err)
+	}
+
+	var stdout bytes.Buffer
+	installCmd := cli.NewInstallCommandForTesting(memFs, func() (string, error) {
+		return homeDir, nil
+	}, strings.NewReader(""), &stdout, projectDir)
+	installCmd.SetArgs([]string{})
+	if err := installCmd.Execute(); err != nil {
+		t.Fatalf("install failed: %v\noutput: %s", err, stdout.String())
+	}
+
+	renderedPath := projectDir + "/.claude/CLAUDE.md"
+	exists, err := afero.Exists(memFs, renderedPath)
+	if err != nil {
+		t.Fatalf("error checking rendered file: %v", err)
+	}
+	if !exists {
+		t.Fatalf("expected rendered file at %s after init+install; install output:\n%s", renderedPath, stdout.String())
+	}
+
+	rendered, err := afero.ReadFile(memFs, renderedPath)
+	if err != nil {
+		t.Fatalf("error reading rendered file: %v", err)
+	}
+
+	// The default profile sets company = "Your Company". A successful render
+	// substitutes that into the heading.
+	if !bytes.Contains(rendered, []byte("Your Company")) {
+		t.Errorf("expected rendered CLAUDE.md to contain 'Your Company' (default variable), got:\n%s", rendered)
+	}
+
+	// And the template's literal interpolation token must be gone — if it
+	// survives, the template never went through the renderer.
+	if bytes.Contains(rendered, []byte(".Variables.company")) {
+		t.Errorf("expected template token to be substituted, but it survived in output:\n%s", rendered)
 	}
 }
 

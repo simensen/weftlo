@@ -88,7 +88,7 @@ Template files use Go's `text/template` syntax and support:
 ### Routing and Targets
 
 Files are routed to target directories during installation:
-- Default target: All files go to the install prefix (default: `weftlo/`)
+- Default target: All files go to the install prefix (default: `.claude/`)
 - Named targets: Route specific files to different directories
 - Target overrides: Customize or suppress file routing at project level
 

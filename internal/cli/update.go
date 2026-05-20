@@ -329,7 +329,7 @@ func (c *UpdateCommand) run(cmd *cobra.Command, args []string) error {
 		if globalConfig != nil && globalConfig.InstallPrefix != "" {
 			resolvedInstallPrefix = globalConfig.InstallPrefix
 		} else {
-			resolvedInstallPrefix = "weftlo"
+			resolvedInstallPrefix = domainconfig.DefaultInstallPrefix
 		}
 	}
 
