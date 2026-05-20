@@ -100,9 +100,11 @@ The profile name must be in vendor/name format, where both vendor and name
 consist of alphanumeric characters, underscores, and hyphens.
 
 This command creates:
-  - <config-dir>/profiles/{vendor}/{name}/          Profile directory
-  - <config-dir>/profiles/{vendor}/{name}/profile.yaml  Profile configuration
-  - <config-dir>/profiles/{vendor}/{name}/README.md     Profile documentation
+  - <config-dir>/profiles/{vendor}/{name}/                     Profile directory
+  - <config-dir>/profiles/{vendor}/{name}/profile.yaml         Profile configuration
+  - <config-dir>/profiles/{vendor}/{name}/README.md            Profile documentation (metadata)
+  - <config-dir>/profiles/{vendor}/{name}/content/             Installable content directory
+  - <config-dir>/profiles/{vendor}/{name}/content/CLAUDE.md.tmpl  Starter template
 
 Examples:
   weftlo profile create mycompany/backend
@@ -166,6 +168,20 @@ func (c *ProfileCreateCommand) run(cmd *cobra.Command, args []string) error {
 	// Create README.md
 	readmePath := filepath.Join(profileDir, "README.md")
 	if err := c.createReadme(readmePath, c.profileName); err != nil {
+		return err
+	}
+
+	// Create content/ directory — this is the directory the renderer walks.
+	// Templates placed at the profile root are ignored, so we scaffold
+	// `content/` plus a starter template to make the working layout obvious.
+	contentDir := filepath.Join(profileDir, "content")
+	if err := c.createDirectories(contentDir); err != nil {
+		return err
+	}
+
+	// Create content/CLAUDE.md.tmpl starter template
+	starterPath := filepath.Join(contentDir, "CLAUDE.md.tmpl")
+	if err := c.createStarterTemplate(starterPath, c.profileName); err != nil {
 		return err
 	}
 
@@ -265,16 +281,19 @@ This profile was created with weftlo.
 
 Add a description of this profile and its purpose here.
 
-## Usage
+## Layout
 
-This profile can be customized by:
-- Adding template files (.tmpl) to this directory
-- Setting the inherits_from field in profile.yaml to inherit from another profile
-- Adding variables to profile.yaml for use in templates
+- `+"`profile.yaml`"+`     — profile configuration (name, inherits_from, variables)
+- `+"`content/`"+`         — installable content. Templates here (.tmpl) are
+                     rendered and installed into the project. Files outside
+                     this directory are NOT installed.
 
 ## Customization
 
-Edit the profile.yaml file to configure this profile's behavior.
+- Add template files (.tmpl) to the `+"`content/`"+` directory.
+- Set the `+"`inherits_from`"+` field in `+"`profile.yaml`"+` to inherit from another profile.
+- Add variables to `+"`profile.yaml`"+` and reference them in templates as
+  `+"`{{ .Variables.your_var_name }}`"+`.
 `, profileName)
 
 	if err := afero.WriteFile(c.fs, path, []byte(content), 0644); err != nil {
@@ -287,6 +306,38 @@ Edit the profile.yaml file to configure this profile's behavior.
 	c.trackCreatedPath(path)
 
 	// Verbose output for file creation
+	if c.verbose && !c.quiet {
+		_, _ = fmt.Fprintf(c.stdout, "Creating file: %s\n", path)
+	}
+
+	return nil
+}
+
+// createStarterTemplate creates a minimal content/CLAUDE.md.tmpl starter file
+// so that a fresh `weftlo install` against this profile produces a visible
+// rendered file. The template references one variable to demonstrate
+// substitution; users are expected to edit it.
+func (c *ProfileCreateCommand) createStarterTemplate(path string, profileName string) error {
+	content := fmt.Sprintf(`# Coding Standards for {{ .Variables.company | default "Your Company" }}
+
+<!--
+This file was rendered by weftlo from profile %q.
+Edit the template at this profile's content/CLAUDE.md.tmpl and re-run
+`+"`weftlo update`"+` to sync changes into your project.
+-->
+
+<!-- Add your coding standards, conventions, and AI-assistant instructions here. -->
+`, profileName)
+
+	if err := afero.WriteFile(c.fs, path, []byte(content), 0644); err != nil {
+		return &PermissionError{
+			Path: path,
+			Err:  err,
+		}
+	}
+
+	c.trackCreatedPath(path)
+
 	if c.verbose && !c.quiet {
 		_, _ = fmt.Fprintf(c.stdout, "Creating file: %s\n", path)
 	}

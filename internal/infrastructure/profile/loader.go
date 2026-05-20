@@ -290,6 +290,13 @@ func (l *DefaultProfileLoader) LoadMergedMultiple(profileNames []string) (*Merge
 	return result, nil
 }
 
+// ProfilesBasePath exposes the resolved profiles directory path for callers
+// that need to perform filesystem operations alongside the loader (e.g.,
+// pre-flight validation). It mirrors the private getProfilesBasePath.
+func (l *DefaultProfileLoader) ProfilesBasePath() (string, error) {
+	return l.getProfilesBasePath()
+}
+
 // getProfilesBasePath returns the profiles directory path.
 // If configDir is set, uses <configDir>/profiles.
 // Otherwise, falls back to <homeDir>/.weftlo/profiles for backward compatibility.
