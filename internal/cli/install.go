@@ -271,7 +271,7 @@ func (c *InstallCommand) run(cmd *cobra.Command, args []string) error {
 
 	// Display variable conflict warnings before installation begins
 	if !c.quiet {
-		displayVariableConflictWarnings(c.stdout, mergedProfile.VariableConflicts())
+		displayVariableConflictWarnings(c.stdout, mergedProfile.VariableConflicts(), c.verbose)
 	}
 
 	// Task 4.2: Load project-level ignore patterns and merge with profile patterns

@@ -276,7 +276,7 @@ func (c *StatusCommand) run(cmd *cobra.Command, args []string) error {
 
 			// Display variable conflict warnings (after profile loaded, before output)
 			if !c.quiet && !c.jsonOutput {
-				displayVariableConflictWarnings(c.stdout, mergedProfile.VariableConflicts())
+				displayVariableConflictWarnings(c.stdout, mergedProfile.VariableConflicts(), c.verbose)
 			}
 		}
 	} else {

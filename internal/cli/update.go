@@ -316,7 +316,7 @@ func (c *UpdateCommand) run(cmd *cobra.Command, args []string) error {
 
 	// Display variable conflict warnings before update begins
 	if !c.quiet {
-		displayVariableConflictWarnings(c.stdout, mergedProfile.VariableConflicts())
+		displayVariableConflictWarnings(c.stdout, mergedProfile.VariableConflicts(), c.verbose)
 	}
 
 	// Task 4.6: Construct Router using same pattern as install command

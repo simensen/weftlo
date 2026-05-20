@@ -290,57 +290,79 @@ func TestStatusCommand_UsesMergedProfileVariables(t *testing.T) {
 	assert.Contains(t, result.Profiles, "vendor/test", "should contain the profile name")
 }
 
-// Test 4.1.4: Conflict warnings are displayed when conflicts exist
-func TestInstallCommand_DisplaysConflictWarningsWhenConflictsExist(t *testing.T) {
-	memFs := testutil.CreateTestFilesystem(t, map[string]string{})
-	homeDir := "/home/testuser"
-	projectDir := "/projects/myproject"
+// Test 4.1.4: Inheritance overrides are suppressed by default and shown under --verbose.
+//
+// Single-chain inheritance overrides (a child profile refining a parent's value)
+// are the intended behavior of profile inheritance, not a problem. They are
+// noise in default output and are only surfaced under --verbose.
+func TestInstallCommand_InheritanceConflictsSuppressedByDefaultShownVerbose(t *testing.T) {
+	setup := func(t *testing.T) (afero.Fs, string, string) {
+		memFs := testutil.CreateTestFilesystem(t, map[string]string{})
+		homeDir := "/home/testuser"
+		projectDir := "/projects/myproject"
 
-	// Setup global config
-	configDir := filepath.Join(homeDir, ".weftlo")
-	if err := memFs.MkdirAll(configDir, 0755); err != nil {
-		t.Fatalf("failed to create config directory: %v", err)
+		configDir := filepath.Join(homeDir, ".weftlo")
+		if err := memFs.MkdirAll(configDir, 0755); err != nil {
+			t.Fatalf("failed to create config directory: %v", err)
+		}
+		globalConfig := "default_profile: vendor/child\n"
+		if err := afero.WriteFile(memFs, filepath.Join(configDir, "config.yaml"), []byte(globalConfig), 0644); err != nil {
+			t.Fatalf("failed to write config.yaml: %v", err)
+		}
+
+		parentVars := map[string]interface{}{
+			"app_name": "ParentApp",
+			"database": map[string]interface{}{
+				"host": "parent-db.example.com",
+			},
+		}
+		childVars := map[string]interface{}{
+			"app_name": "ChildApp",
+			"database": map[string]interface{}{
+				"host": "child-db.example.com",
+			},
+		}
+		setupProfileWithInheritanceAndVariables(t, memFs, homeDir, "vendor/parent", "vendor/child", parentVars, childVars)
+
+		if err := memFs.MkdirAll(projectDir, 0755); err != nil {
+			t.Fatalf("failed to create project directory: %v", err)
+		}
+		return memFs, homeDir, projectDir
 	}
-	globalConfig := "default_profile: vendor/child\n"
-	if err := afero.WriteFile(memFs, filepath.Join(configDir, "config.yaml"), []byte(globalConfig), 0644); err != nil {
-		t.Fatalf("failed to write config.yaml: %v", err)
-	}
 
-	// Setup parent and child profiles with conflicting variables
-	parentVars := map[string]interface{}{
-		"app_name": "ParentApp",
-		"database": map[string]interface{}{
-			"host": "parent-db.example.com",
-		},
-	}
-	childVars := map[string]interface{}{
-		"app_name": "ChildApp", // This conflicts with parent
-		"database": map[string]interface{}{
-			"host": "child-db.example.com", // This also conflicts
-		},
-	}
-	setupProfileWithInheritanceAndVariables(t, memFs, homeDir, "vendor/parent", "vendor/child", parentVars, childVars)
+	t.Run("default output suppresses inheritance override warnings", func(t *testing.T) {
+		memFs, homeDir, projectDir := setup(t)
 
-	// Create project directory
-	if err := memFs.MkdirAll(projectDir, 0755); err != nil {
-		t.Fatalf("failed to create project directory: %v", err)
-	}
+		var stdout bytes.Buffer
+		installCmd := cli.NewInstallCommandForTesting(memFs, func() (string, error) {
+			return homeDir, nil
+		}, strings.NewReader(""), &stdout, projectDir)
 
-	var stdout bytes.Buffer
-	installCmd := cli.NewInstallCommandForTesting(memFs, func() (string, error) {
-		return homeDir, nil
-	}, strings.NewReader(""), &stdout, projectDir)
+		installCmd.SetArgs([]string{})
+		err := installCmd.Execute()
+		require.NoError(t, err, "install should succeed")
 
-	installCmd.SetArgs([]string{})
-	err := installCmd.Execute()
+		output := stdout.String()
+		assert.NotContains(t, output, "Warning: Variable", "inheritance overrides must not appear in default output")
+		assert.NotContains(t, output, "overridden by", "inheritance overrides must not appear in default output")
+	})
 
-	// The command should succeed
-	require.NoError(t, err, "install command should succeed even with variable conflicts")
+	t.Run("verbose surfaces inheritance override warnings", func(t *testing.T) {
+		memFs, homeDir, projectDir := setup(t)
 
-	// Check that warning was displayed
-	output := stdout.String()
-	assert.Contains(t, output, "Warning:", "should display warning for variable conflicts")
-	assert.Contains(t, output, "app_name", "warning should mention the conflicting variable")
+		var stdout bytes.Buffer
+		installCmd := cli.NewInstallCommandForTesting(memFs, func() (string, error) {
+			return homeDir, nil
+		}, strings.NewReader(""), &stdout, projectDir)
+
+		installCmd.SetArgs([]string{"--verbose"})
+		err := installCmd.Execute()
+		require.NoError(t, err, "install should succeed")
+
+		output := stdout.String()
+		assert.Contains(t, output, "Warning:", "verbose should display inheritance override warnings")
+		assert.Contains(t, output, "app_name", "warning should mention the conflicting variable")
+	})
 }
 
 // Test 4.1.5: No warnings displayed when no conflicts exist
@@ -387,8 +409,8 @@ func TestInstallCommand_NoWarningsWhenNoConflicts(t *testing.T) {
 	assert.NotContains(t, output, "overridden by", "should not display conflict warnings when no conflicts exist")
 }
 
-// Test 4.1.6: Update command displays conflict warnings when conflicts exist
-func TestUpdateCommand_DisplaysConflictWarningsWhenConflictsExist(t *testing.T) {
+// Test 4.1.6: Update mirrors install — inheritance overrides are --verbose-only.
+func TestUpdateCommand_InheritanceConflictsSuppressedByDefaultShownVerbose(t *testing.T) {
 	memFs := testutil.CreateTestFilesystem(t, map[string]string{})
 	homeDir := "/home/testuser"
 	projectDir := "/projects/myproject"
@@ -435,15 +457,23 @@ func TestUpdateCommand_DisplaysConflictWarningsWhenConflictsExist(t *testing.T) 
 		t.Fatalf("failed to write manifest: %v", err)
 	}
 
-	var stdout bytes.Buffer
-	updateCmd := cli.NewUpdateCommandForTesting(memFs, func() (string, error) {
+	// Default output: no inheritance warning.
+	var defaultStdout bytes.Buffer
+	defaultCmd := cli.NewUpdateCommandForTesting(memFs, func() (string, error) {
 		return homeDir, nil
-	}, strings.NewReader(""), &stdout, projectDir)
+	}, strings.NewReader(""), &defaultStdout, projectDir)
+	defaultCmd.SetArgs([]string{})
+	_ = defaultCmd.Execute()
+	assert.NotContains(t, defaultStdout.String(), "Warning: Variable",
+		"inheritance overrides must not appear in default update output")
 
-	updateCmd.SetArgs([]string{})
-	_ = updateCmd.Execute() // Ignore error since we're checking output
-
-	// Check that warning was displayed
-	output := stdout.String()
-	assert.Contains(t, output, "Warning:", "should display warning for variable conflicts")
+	// Verbose output: warning surfaces.
+	var verboseStdout bytes.Buffer
+	verboseCmd := cli.NewUpdateCommandForTesting(memFs, func() (string, error) {
+		return homeDir, nil
+	}, strings.NewReader(""), &verboseStdout, projectDir)
+	verboseCmd.SetArgs([]string{"--verbose"})
+	_ = verboseCmd.Execute()
+	assert.Contains(t, verboseStdout.String(), "Warning:",
+		"verbose update should display inheritance override warnings")
 }
