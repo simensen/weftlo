@@ -145,18 +145,18 @@ func (e *TemplateSyntaxError) Error() string {
 	var builder strings.Builder
 
 	// Header with source path and location
-	builder.WriteString(fmt.Sprintf("template syntax error in %s", e.SourcePath))
+	fmt.Fprintf(&builder, "template syntax error in %s", e.SourcePath)
 	if e.Line > 0 {
-		builder.WriteString(fmt.Sprintf(" at line %d", e.Line))
+		fmt.Fprintf(&builder, " at line %d", e.Line)
 		if e.Column > 0 {
-			builder.WriteString(fmt.Sprintf(", column %d", e.Column))
+			fmt.Fprintf(&builder, ", column %d", e.Column)
 		}
 	}
 	builder.WriteString(":\n")
 
 	// Error message
 	if e.Err != nil {
-		builder.WriteString(fmt.Sprintf("    %s\n", e.Err.Error()))
+		fmt.Fprintf(&builder, "    %s\n", e.Err.Error())
 	}
 
 	// Context display
@@ -208,15 +208,15 @@ func (e *TemplateExecutionError) Error() string {
 	var builder strings.Builder
 
 	// Header with source path and location
-	builder.WriteString(fmt.Sprintf("template execution error in %s", e.SourcePath))
+	fmt.Fprintf(&builder, "template execution error in %s", e.SourcePath)
 	if e.Line > 0 {
-		builder.WriteString(fmt.Sprintf(" at line %d", e.Line))
+		fmt.Fprintf(&builder, " at line %d", e.Line)
 	}
 	builder.WriteString(":\n")
 
 	// Error message
 	if e.Err != nil {
-		builder.WriteString(fmt.Sprintf("    %s\n", e.Err.Error()))
+		fmt.Fprintf(&builder, "    %s\n", e.Err.Error())
 	}
 
 	// Context display
@@ -382,10 +382,10 @@ func extractContext(content string, line int) string {
 
 		if i == line {
 			// Error line - mark with >>>
-			builder.WriteString(fmt.Sprintf(">>> %*d | %s\n", lineNumWidth, i, lineContent))
+			fmt.Fprintf(&builder, ">>> %*d | %s\n", lineNumWidth, i, lineContent)
 		} else {
 			// Context line - indent with spaces
-			builder.WriteString(fmt.Sprintf("    %*d | %s\n", lineNumWidth, i, lineContent))
+			fmt.Fprintf(&builder, "    %*d | %s\n", lineNumWidth, i, lineContent)
 		}
 	}
 
@@ -427,16 +427,16 @@ func formatIncludeChain(chain []string) string {
 			// First file (root) - no arrow prefix
 			if len(chain) == 1 {
 				// Single-item chain - mark as error location
-				builder.WriteString(fmt.Sprintf("    %s (error here)\n", file))
+				fmt.Fprintf(&builder, "    %s (error here)\n", file)
 			} else {
-				builder.WriteString(fmt.Sprintf("    %s\n", file))
+				fmt.Fprintf(&builder, "    %s\n", file)
 			}
 		} else if i == len(chain)-1 {
 			// Last file - mark as error location
-			builder.WriteString(fmt.Sprintf("    -> %s (error here)\n", file))
+			fmt.Fprintf(&builder, "    -> %s (error here)\n", file)
 		} else {
 			// Middle files - show with arrow
-			builder.WriteString(fmt.Sprintf("    -> %s\n", file))
+			fmt.Fprintf(&builder, "    -> %s\n", file)
 		}
 	}
 
