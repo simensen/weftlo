@@ -95,7 +95,7 @@ func (e *FileConflictError) Error() string {
 	msg.WriteString("file conflict: the following files already exist:\n")
 
 	for _, file := range e.ConflictingFiles {
-		msg.WriteString(fmt.Sprintf("  - %s\n", file))
+		fmt.Fprintf(&msg, "  - %s\n", file)
 	}
 
 	msg.WriteString("Use --force to overwrite existing files.")

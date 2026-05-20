@@ -160,7 +160,7 @@ The install prefix is resolved in the following order:
   1. --install-prefix flag (if specified)
   2. .weftlo.yaml install_prefix (if exists)
   3. ~/.weftlo/config.yaml install_prefix (if set)
-  4. Default: "weftlo"
+  4. Default: ".claude"
 
 If .weftlo.yaml does not exist, it will be created after successful installation.`,
 		RunE: installCmd.run,
@@ -260,9 +260,18 @@ func (c *InstallCommand) run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to load profiles: %w", err)
 	}
 
+	// Pre-flight: catch *.tmpl files left at the profile root (outside content/).
+	// The renderer ignores them, so without this check a misconfigured profile
+	// would install successfully but produce zero rendered files.
+	if profilesBase, perr := profileLoader.ProfilesBasePath(); perr == nil {
+		if verr := infraprofile.ValidateChainLayout(c.fs, profilesBase, mergedProfile.ProfileNames(), mergedProfile.ContentConfig.Root); verr != nil {
+			return verr
+		}
+	}
+
 	// Display variable conflict warnings before installation begins
 	if !c.quiet {
-		displayVariableConflictWarnings(c.stdout, mergedProfile.VariableConflicts())
+		displayVariableConflictWarnings(c.stdout, mergedProfile.VariableConflicts(), c.verbose)
 	}
 
 	// Task 4.2: Load project-level ignore patterns and merge with profile patterns
@@ -366,6 +375,16 @@ func (c *InstallCommand) run(cmd *cobra.Command, args []string) error {
 	// Display success output (unless quiet mode is enabled or dry-run)
 	if !c.dryRun {
 		c.displaySuccessOutput(projectDir, result)
+	}
+
+	// Zero-output notice: if the install produced no rendered files, the
+	// .weftlo.yaml/.weftlo.manifest.json artifacts alone don't tell the user
+	// why their project is empty. An intentionally-empty profile is valid, so
+	// this is informational, not fatal.
+	if !c.quiet && result.FilesProcessed == 0 {
+		_, _ = fmt.Fprintf(c.stdout,
+			"notice: no files were rendered from profile %q. Check that templates exist in %s/.\n",
+			c.resolvedProfile, mergedProfile.ContentConfig.Root)
 	}
 
 	return nil

@@ -181,7 +181,7 @@ type Profile struct {
 // ProfileConfig from profile.yaml
 type ProfileConfig struct {
     Name     string                 `yaml:"name"`
-    Extends  string                 `yaml:"extends,omitempty"`
+    InheritsFrom string             `yaml:"inherits_from,omitempty"`
     Variables map[string]interface{} `yaml:"variables,omitempty"`
 }
 
@@ -375,7 +375,7 @@ target_overrides:
 ```yaml
 # profiles/<vendor>/<name>/profile.yaml
 name: mycompany/backend
-extends: mycompany/base
+inherits_from: mycompany/base
 
 variables:
   framework: express
@@ -386,7 +386,7 @@ variables:
 
 ```yaml
 # profiles/<vendor>/<name>/content.yaml
-default_target: weftlo
+default_target: .claude
 
 targets:
   skills: .claude/skills/
@@ -412,7 +412,7 @@ variables:
 
 # child profile
 name: mycompany/backend
-extends: mycompany/base
+inherits_from: mycompany/base
 variables:
   framework: express
 ```
@@ -420,7 +420,7 @@ variables:
 **Inheritance Resolution:**
 
 1. Load the requested profile
-2. If `extends` is set, recursively load parent profile
+2. If `inherits_from` is set, recursively load parent profile
 3. Build inheritance chain (root → leaf)
 4. Merge content from each profile in order
 
@@ -548,7 +548,7 @@ Files are routed to named target directories:
 
 ```yaml
 # content.yaml
-default_target: weftlo
+default_target: .claude
 
 targets:
   skills: .claude/skills/

@@ -63,8 +63,8 @@ func generateUnifiedDiff(oldLines, newLines []string, targetPath string) string 
 	var result strings.Builder
 
 	// Write diff headers
-	result.WriteString(fmt.Sprintf("--- a/%s\n", targetPath))
-	result.WriteString(fmt.Sprintf("+++ b/%s\n", targetPath))
+	fmt.Fprintf(&result, "--- a/%s\n", targetPath)
+	fmt.Fprintf(&result, "+++ b/%s\n", targetPath)
 
 	// Use the longest common subsequence algorithm to find differences
 	lcs := computeLCS(oldLines, newLines)
@@ -270,7 +270,7 @@ func groupIntoHunks(ops []editOp, oldLen, newLen, context int) []string {
 
 		// Write hunk header
 		currentHunk.Reset()
-		currentHunk.WriteString(fmt.Sprintf("@@ -%d,%d +%d,%d @@\n", oldStart, oldCount, newStart, newCount))
+		fmt.Fprintf(&currentHunk, "@@ -%d,%d +%d,%d @@\n", oldStart, oldCount, newStart, newCount)
 
 		// Write hunk content
 		for i := start; i < end; i++ {

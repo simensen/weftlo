@@ -285,12 +285,12 @@ func TestUpdateCommand_NoChangesNeeded(t *testing.T) {
 	})
 	writeProjectConfig(memFs, projectDir, "default/default")
 	writeManifest(memFs, projectDir, "default/default", map[string]manifest.ManifestFile{
-		"weftlo/README.md": {
+		".claude/README.md": {
 			SourceChecksum: checksum,
 			OutputChecksum: checksum,
 		},
 	})
-	writeInstalledFile(memFs, projectDir, "weftlo/README.md", templateContent)
+	writeInstalledFile(memFs, projectDir, ".claude/README.md", templateContent)
 
 	var stdout bytes.Buffer
 	cmd := cli.NewUpdateCommandForTesting(memFs, func() (string, error) {
@@ -319,12 +319,12 @@ func TestUpdateCommand_SourceChangedFilesUpdated(t *testing.T) {
 	})
 	writeProjectConfig(memFs, projectDir, "default/default")
 	writeManifest(memFs, projectDir, "default/default", map[string]manifest.ManifestFile{
-		"weftlo/README.md": {
+		".claude/README.md": {
 			SourceChecksum: oldChecksum, // Manifest has old checksum
 			OutputChecksum: oldChecksum,
 		},
 	})
-	writeInstalledFile(memFs, projectDir, "weftlo/README.md", oldContent)
+	writeInstalledFile(memFs, projectDir, ".claude/README.md", oldContent)
 
 	var stdout bytes.Buffer
 	cmd := cli.NewUpdateCommandForTesting(memFs, func() (string, error) {
@@ -335,7 +335,7 @@ func TestUpdateCommand_SourceChangedFilesUpdated(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify file was updated
-	content, _ := afero.ReadFile(memFs, filepath.Join(projectDir, "weftlo", "README.md"))
+	content, _ := afero.ReadFile(memFs, filepath.Join(projectDir, ".claude", "README.md"))
 	assert.Equal(t, newContent, string(content))
 	assert.Contains(t, stdout.String(), "updated")
 }
@@ -357,12 +357,12 @@ func TestUpdateCommand_UserModifiedFilesSkipped(t *testing.T) {
 	})
 	writeProjectConfig(memFs, projectDir, "default/default")
 	writeManifest(memFs, projectDir, "default/default", map[string]manifest.ManifestFile{
-		"weftlo/README.md": {
+		".claude/README.md": {
 			SourceChecksum: templateChecksum,
 			OutputChecksum: templateChecksum, // Original installed checksum
 		},
 	})
-	writeInstalledFile(memFs, projectDir, "weftlo/README.md", userContent) // User modified!
+	writeInstalledFile(memFs, projectDir, ".claude/README.md", userContent) // User modified!
 
 	var stdout bytes.Buffer
 	cmd := cli.NewUpdateCommandForTesting(memFs, func() (string, error) {
@@ -373,7 +373,7 @@ func TestUpdateCommand_UserModifiedFilesSkipped(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify file was NOT updated (user changes preserved)
-	content, _ := afero.ReadFile(memFs, filepath.Join(projectDir, "weftlo", "README.md"))
+	content, _ := afero.ReadFile(memFs, filepath.Join(projectDir, ".claude", "README.md"))
 	assert.Equal(t, userContent, string(content))
 	assert.Contains(t, stdout.String(), "skipped")
 }
@@ -395,12 +395,12 @@ func TestUpdateCommand_ForceUpdatesUserModifiedFiles(t *testing.T) {
 	})
 	writeProjectConfig(memFs, projectDir, "default/default")
 	writeManifest(memFs, projectDir, "default/default", map[string]manifest.ManifestFile{
-		"weftlo/README.md": {
+		".claude/README.md": {
 			SourceChecksum: templateChecksum,
 			OutputChecksum: templateChecksum,
 		},
 	})
-	writeInstalledFile(memFs, projectDir, "weftlo/README.md", userContent)
+	writeInstalledFile(memFs, projectDir, ".claude/README.md", userContent)
 
 	var stdout bytes.Buffer
 	cmd := cli.NewUpdateCommandForTesting(memFs, func() (string, error) {
@@ -412,7 +412,7 @@ func TestUpdateCommand_ForceUpdatesUserModifiedFiles(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify file WAS updated (user changes overwritten)
-	content, _ := afero.ReadFile(memFs, filepath.Join(projectDir, "weftlo", "README.md"))
+	content, _ := afero.ReadFile(memFs, filepath.Join(projectDir, ".claude", "README.md"))
 	assert.Equal(t, templateContent, string(content))
 }
 
@@ -430,12 +430,12 @@ func TestUpdateCommand_RemoveOrphansDeletesOrphanFiles(t *testing.T) {
 	writeProfile(memFs, homeDir, "default", "default", "", map[string]string{}) // No templates!
 	writeProjectConfig(memFs, projectDir, "default/default")
 	writeManifest(memFs, projectDir, "default/default", map[string]manifest.ManifestFile{
-		"weftlo/orphan.md": { // File in manifest but not in profile
+		".claude/orphan.md": { // File in manifest but not in profile
 			SourceChecksum: orphanChecksum,
 			OutputChecksum: orphanChecksum,
 		},
 	})
-	writeInstalledFile(memFs, projectDir, "weftlo/orphan.md", orphanContent)
+	writeInstalledFile(memFs, projectDir, ".claude/orphan.md", orphanContent)
 
 	var stdout bytes.Buffer
 	cmd := cli.NewUpdateCommandForTesting(memFs, func() (string, error) {
@@ -447,7 +447,7 @@ func TestUpdateCommand_RemoveOrphansDeletesOrphanFiles(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify orphan file was deleted
-	exists, _ := afero.Exists(memFs, filepath.Join(projectDir, "weftlo", "orphan.md"))
+	exists, _ := afero.Exists(memFs, filepath.Join(projectDir, ".claude", "orphan.md"))
 	assert.False(t, exists)
 	assert.Contains(t, stdout.String(), "deleted")
 }
@@ -481,7 +481,7 @@ func TestUpdateCommand_CreatesNewFiles(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify file was created in weftlo/ directory
-	content, err := afero.ReadFile(memFs, filepath.Join(projectDir, "weftlo", "docs", "guide.md"))
+	content, err := afero.ReadFile(memFs, filepath.Join(projectDir, ".claude", "docs", "guide.md"))
 	require.NoError(t, err)
 	assert.Equal(t, templateContent, string(content))
 	assert.Contains(t, stdout.String(), "created")
@@ -510,7 +510,7 @@ func TestUpdateCommand_CreatesParentDirectories(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify nested directories were created under weftlo/
-	exists, _ := afero.DirExists(memFs, filepath.Join(projectDir, "weftlo", "deeply", "nested", "path"))
+	exists, _ := afero.DirExists(memFs, filepath.Join(projectDir, ".claude", "deeply", "nested", "path"))
 	assert.True(t, exists)
 }
 
@@ -538,7 +538,7 @@ func TestUpdateCommand_DryRunPreventsWrites(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify file was NOT created (not even in weftlo/)
-	exists, _ := afero.Exists(memFs, filepath.Join(projectDir, "weftlo", "new-file.md"))
+	exists, _ := afero.Exists(memFs, filepath.Join(projectDir, ".claude", "new-file.md"))
 	assert.False(t, exists)
 
 	// Verify dry-run indicator in output
@@ -558,12 +558,12 @@ func TestUpdateCommand_DeletesFiles(t *testing.T) {
 	writeProfile(memFs, homeDir, "default", "default", "", map[string]string{})
 	writeProjectConfig(memFs, projectDir, "default/default")
 	writeManifest(memFs, projectDir, "default/default", map[string]manifest.ManifestFile{
-		"weftlo/to-delete.md": {
+		".claude/to-delete.md": {
 			SourceChecksum: orphanChecksum,
 			OutputChecksum: orphanChecksum,
 		},
 	})
-	writeInstalledFile(memFs, projectDir, "weftlo/to-delete.md", "orphan content")
+	writeInstalledFile(memFs, projectDir, ".claude/to-delete.md", "orphan content")
 
 	var stdout bytes.Buffer
 	cmd := cli.NewUpdateCommandForTesting(memFs, func() (string, error) {
@@ -574,7 +574,7 @@ func TestUpdateCommand_DeletesFiles(t *testing.T) {
 	err := cmd.Execute()
 	require.NoError(t, err)
 
-	exists, _ := afero.Exists(memFs, filepath.Join(projectDir, "weftlo", "to-delete.md"))
+	exists, _ := afero.Exists(memFs, filepath.Join(projectDir, ".claude", "to-delete.md"))
 	assert.False(t, exists)
 }
 
@@ -597,17 +597,17 @@ func TestUpdateCommand_MultipleOperations(t *testing.T) {
 	})
 	writeProjectConfig(memFs, projectDir, "default/default")
 	writeManifest(memFs, projectDir, "default/default", map[string]manifest.ManifestFile{
-		"weftlo/existing.md": {
+		".claude/existing.md": {
 			SourceChecksum: oldChecksum,
 			OutputChecksum: oldChecksum,
 		},
-		"weftlo/orphan.md": {
+		".claude/orphan.md": {
 			SourceChecksum: orphanChecksum,
 			OutputChecksum: orphanChecksum,
 		},
 	})
-	writeInstalledFile(memFs, projectDir, "weftlo/existing.md", oldContent)
-	writeInstalledFile(memFs, projectDir, "weftlo/orphan.md", "orphan")
+	writeInstalledFile(memFs, projectDir, ".claude/existing.md", oldContent)
+	writeInstalledFile(memFs, projectDir, ".claude/orphan.md", "orphan")
 
 	var stdout bytes.Buffer
 	cmd := cli.NewUpdateCommandForTesting(memFs, func() (string, error) {
@@ -660,7 +660,7 @@ func TestUpdateCommand_RegeneratesManifest(t *testing.T) {
 	err = json.Unmarshal(data, &m)
 	require.NoError(t, err)
 
-	assert.Contains(t, m.Files, "weftlo/file.md")
+	assert.Contains(t, m.Files, ".claude/file.md")
 }
 
 // Test 5.2: Manifest NOT regenerated during dry-run
@@ -738,12 +738,12 @@ func TestUpdateCommand_SkippedFilesShowRationale(t *testing.T) {
 	})
 	writeProjectConfig(memFs, projectDir, "default/default")
 	writeManifest(memFs, projectDir, "default/default", map[string]manifest.ManifestFile{
-		"weftlo/README.md": {
+		".claude/README.md": {
 			SourceChecksum: templateChecksum,
 			OutputChecksum: templateChecksum,
 		},
 	})
-	writeInstalledFile(memFs, projectDir, "weftlo/README.md", "user modified content")
+	writeInstalledFile(memFs, projectDir, ".claude/README.md", "user modified content")
 
 	var stdout bytes.Buffer
 	cmd := cli.NewUpdateCommandForTesting(memFs, func() (string, error) {
@@ -799,27 +799,27 @@ func TestUpdateCommand_FullWorkflowMixedStatuses(t *testing.T) {
 	})
 	writeProjectConfig(memFs, projectDir, "default/default")
 	writeManifest(memFs, projectDir, "default/default", map[string]manifest.ManifestFile{
-		"weftlo/unchanged.md": {
+		".claude/unchanged.md": {
 			SourceChecksum: unchangedChecksum,
 			OutputChecksum: unchangedChecksum,
 		},
-		"weftlo/source-change.md": {
+		".claude/source-change.md": {
 			SourceChecksum: oldSourceChecksum,
 			OutputChecksum: oldSourceChecksum,
 		},
-		"weftlo/user-modified.md": {
+		".claude/user-modified.md": {
 			SourceChecksum: templateForUserModChecksum,
 			OutputChecksum: templateForUserModChecksum,
 		},
-		"weftlo/orphan.md": {
+		".claude/orphan.md": {
 			SourceChecksum: orphanChecksum,
 			OutputChecksum: orphanChecksum,
 		},
 	})
-	writeInstalledFile(memFs, projectDir, "weftlo/unchanged.md", unchangedContent)
-	writeInstalledFile(memFs, projectDir, "weftlo/source-change.md", oldSourceContent)
-	writeInstalledFile(memFs, projectDir, "weftlo/user-modified.md", "# User Modified This")
-	writeInstalledFile(memFs, projectDir, "weftlo/orphan.md", orphanContent)
+	writeInstalledFile(memFs, projectDir, ".claude/unchanged.md", unchangedContent)
+	writeInstalledFile(memFs, projectDir, ".claude/source-change.md", oldSourceContent)
+	writeInstalledFile(memFs, projectDir, ".claude/user-modified.md", "# User Modified This")
+	writeInstalledFile(memFs, projectDir, ".claude/orphan.md", orphanContent)
 	// Note: new-file.md doesn't exist yet
 
 	var stdout bytes.Buffer
@@ -832,23 +832,23 @@ func TestUpdateCommand_FullWorkflowMixedStatuses(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify unchanged file remains unchanged
-	content, _ := afero.ReadFile(memFs, filepath.Join(projectDir, "weftlo", "unchanged.md"))
+	content, _ := afero.ReadFile(memFs, filepath.Join(projectDir, ".claude", "unchanged.md"))
 	assert.Equal(t, unchangedContent, string(content))
 
 	// Verify source-changed file was updated
-	content, _ = afero.ReadFile(memFs, filepath.Join(projectDir, "weftlo", "source-change.md"))
+	content, _ = afero.ReadFile(memFs, filepath.Join(projectDir, ".claude", "source-change.md"))
 	assert.Equal(t, newSourceContent, string(content))
 
 	// Verify user-modified file was skipped (not overwritten)
-	content, _ = afero.ReadFile(memFs, filepath.Join(projectDir, "weftlo", "user-modified.md"))
+	content, _ = afero.ReadFile(memFs, filepath.Join(projectDir, ".claude", "user-modified.md"))
 	assert.Equal(t, "# User Modified This", string(content))
 
 	// Verify new file was created
-	content, _ = afero.ReadFile(memFs, filepath.Join(projectDir, "weftlo", "new-file.md"))
+	content, _ = afero.ReadFile(memFs, filepath.Join(projectDir, ".claude", "new-file.md"))
 	assert.Equal(t, "Brand new file content", string(content))
 
 	// Verify orphan file was deleted
-	exists, _ := afero.Exists(memFs, filepath.Join(projectDir, "weftlo", "orphan.md"))
+	exists, _ := afero.Exists(memFs, filepath.Join(projectDir, ".claude", "orphan.md"))
 	assert.False(t, exists)
 }
 
@@ -880,12 +880,12 @@ func TestUpdateCommand_ProfileInheritance(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify inherited file was created in weftlo/
-	content, err := afero.ReadFile(memFs, filepath.Join(projectDir, "weftlo", "inherited.md"))
+	content, err := afero.ReadFile(memFs, filepath.Join(projectDir, ".claude", "inherited.md"))
 	require.NoError(t, err)
 	assert.Equal(t, "# From Parent", string(content))
 
 	// Verify child-specific file was created in weftlo/
-	content, err = afero.ReadFile(memFs, filepath.Join(projectDir, "weftlo", "child-only.md"))
+	content, err = afero.ReadFile(memFs, filepath.Join(projectDir, ".claude", "child-only.md"))
 	require.NoError(t, err)
 	assert.Equal(t, "# From Child", string(content))
 }
@@ -909,17 +909,17 @@ func TestUpdateCommand_AllFilesUnchanged(t *testing.T) {
 	})
 	writeProjectConfig(memFs, projectDir, "default/default")
 	writeManifest(memFs, projectDir, "default/default", map[string]manifest.ManifestFile{
-		"weftlo/file1.md": {
+		".claude/file1.md": {
 			SourceChecksum: file1Checksum,
 			OutputChecksum: file1Checksum,
 		},
-		"weftlo/file2.md": {
+		".claude/file2.md": {
 			SourceChecksum: file2Checksum,
 			OutputChecksum: file2Checksum,
 		},
 	})
-	writeInstalledFile(memFs, projectDir, "weftlo/file1.md", file1Content)
-	writeInstalledFile(memFs, projectDir, "weftlo/file2.md", file2Content)
+	writeInstalledFile(memFs, projectDir, ".claude/file1.md", file1Content)
+	writeInstalledFile(memFs, projectDir, ".claude/file2.md", file2Content)
 
 	var stdout bytes.Buffer
 	cmd := cli.NewUpdateCommandForTesting(memFs, func() (string, error) {
@@ -983,7 +983,7 @@ func TestUpdateCommand_TemplatesRenderedWithGoSyntax(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify file was created in weftlo/ with template rendered
-	content, err := afero.ReadFile(memFs, filepath.Join(projectDir, "weftlo", "output.md"))
+	content, err := afero.ReadFile(memFs, filepath.Join(projectDir, ".claude", "output.md"))
 	require.NoError(t, err)
 	assert.Equal(t, "# default/default", string(content))
 }
@@ -1034,7 +1034,7 @@ func TestUpdateCommand_AddProfileFlag(t *testing.T) {
 	assert.Equal(t, []string{"default/default", "new/profile"}, config.Profiles)
 
 	// Verify file from new profile was installed
-	exists, _ := afero.Exists(memFs, filepath.Join(projectDir, "weftlo", "newfile.md"))
+	exists, _ := afero.Exists(memFs, filepath.Join(projectDir, ".claude", "newfile.md"))
 	assert.True(t, exists, "file from added profile should be installed")
 }
 

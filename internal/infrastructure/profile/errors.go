@@ -89,3 +89,32 @@ type NoProfilesSpecifiedError struct{}
 func (e *NoProfilesSpecifiedError) Error() string {
 	return "no profiles specified"
 }
+
+// MisplacedTemplatesError is returned when *.tmpl files are found at the
+// profile root rather than inside the content/ directory. The renderer only
+// reads files under content/, so misplaced templates would otherwise be
+// silently ignored — this error catches that mistake early.
+type MisplacedTemplatesError struct {
+	// ProfileName is the profile where the misplaced files were found.
+	ProfileName string
+	// ContentRoot is the expected content directory (typically "content").
+	ContentRoot string
+	// Files contains the misplaced filenames, relative to the profile root.
+	Files []string
+}
+
+func (e *MisplacedTemplatesError) Error() string {
+	noun := "file"
+	if len(e.Files) != 1 {
+		noun = "files"
+	}
+	var b strings.Builder
+	fmt.Fprintf(&b, "profile %q has %d template %s outside %s/:\n",
+		e.ProfileName, len(e.Files), noun, e.ContentRoot)
+	for _, f := range e.Files {
+		fmt.Fprintf(&b, "  - %s\n", f)
+	}
+	fmt.Fprintf(&b, "Templates must live in the profile's %s/ directory. Move the %s and retry.",
+		e.ContentRoot, noun)
+	return b.String()
+}

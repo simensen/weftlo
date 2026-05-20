@@ -22,30 +22,28 @@ weftlo version
 
 ## Quick Start
 
-### 1. Initialize Configuration
-
 ```bash
+# 1. Install
+go install github.com/simensen/weftlo/cmd/weftlo@latest
+
+# 2. Initialize (creates ~/.config/weftlo/ with a starter profile)
 weftlo init
-```
 
-This creates the configuration directory (`~/.config/weftlo/` or `~/.weftlo/`) with a default profile.
-
-### 2. Install a Profile to Your Project
-
-```bash
+# 3. Install the starter profile into a project
 cd ~/projects/my-app
 weftlo install
+
+# 4. See what got rendered
+cat .claude/CLAUDE.md
 ```
 
-This renders templates from your profile into the project and creates tracking files (`.weftlo.yaml` and `.weftlo.manifest.json`).
+The `cat` prints a rendered `CLAUDE.md` with the profile's variables substituted in.
+Edit the template at `~/.config/weftlo/profiles/default/default/content/CLAUDE.md.tmpl`
+and run `weftlo update` in your project to sync changes.
 
-### 3. Update After Template Changes
-
-```bash
-weftlo update
-```
-
-Syncs changes from your profile templates, preserving any local modifications.
+For inheritance, variables, multi-profile composition, and routing,
+see the [Product Vision](docs/product/vision.md) and the
+[Configuration Reference](docs/reference/configuration.md).
 
 ## Documentation
 

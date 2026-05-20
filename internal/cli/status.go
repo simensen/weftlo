@@ -16,6 +16,7 @@ import (
 
 	"github.com/simensen/weftlo/internal/app/rendering"
 	"github.com/simensen/weftlo/internal/app/routing"
+	domainconfig "github.com/simensen/weftlo/internal/domain/config"
 	"github.com/simensen/weftlo/internal/domain/manifest"
 	infraconfig "github.com/simensen/weftlo/internal/infrastructure/config"
 	infraprofile "github.com/simensen/weftlo/internal/infrastructure/profile"
@@ -275,7 +276,7 @@ func (c *StatusCommand) run(cmd *cobra.Command, args []string) error {
 
 			// Display variable conflict warnings (after profile loaded, before output)
 			if !c.quiet && !c.jsonOutput {
-				displayVariableConflictWarnings(c.stdout, mergedProfile.VariableConflicts())
+				displayVariableConflictWarnings(c.stdout, mergedProfile.VariableConflicts(), c.verbose)
 			}
 		}
 	} else {
@@ -296,7 +297,7 @@ func (c *StatusCommand) run(cmd *cobra.Command, args []string) error {
 			if globalConfig != nil && globalConfig.InstallPrefix != "" {
 				resolvedInstallPrefix = globalConfig.InstallPrefix
 			} else {
-				resolvedInstallPrefix = "weftlo"
+				resolvedInstallPrefix = domainconfig.DefaultInstallPrefix
 			}
 		}
 

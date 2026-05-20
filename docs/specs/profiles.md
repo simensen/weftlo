@@ -111,7 +111,7 @@ profiles/<vendor>/<name>/
 name: mycompany/backend
 
 # Optional: Parent profile for inheritance
-extends: mycompany/base
+inherits_from: mycompany/base
 
 # Optional: Variables for templates
 variables:
@@ -128,7 +128,7 @@ variables:
 | Field | Type | Description |
 |-------|------|-------------|
 | `name` | string | Profile identifier in `vendor/name` format |
-| `extends` | string | Parent profile for inheritance |
+| `inherits_from` | string | Parent profile for inheritance |
 | `variables` | map | Key-value pairs for template substitution |
 
 ## Content Configuration
@@ -137,7 +137,7 @@ variables:
 
 ```yaml
 # Default target directory for files without explicit routing
-default_target: weftlo
+default_target: .claude
 
 # Named target directories
 targets:
@@ -173,7 +173,7 @@ targets:
 
 - `content/skills/coding.md` → `.claude/skills/coding.md`
 - `content/commands/build.md` → `.claude/commands/build.md`
-- `content/other.md` → `weftlo/other.md` (default target)
+- `content/other.md` → `.claude/other.md` (default target)
 
 ## Profile Inheritance
 
@@ -192,7 +192,7 @@ variables:
 ```yaml
 # child profile: mycompany/backend
 name: mycompany/backend
-extends: mycompany/base
+inherits_from: mycompany/base
 variables:
   framework: express  # Added
   author: Backend Team  # Overrides parent
@@ -224,13 +224,13 @@ variables:
 
 # Level 2: company/backend
 name: company/backend
-extends: company/base
+inherits_from: company/base
 variables:
   tier: backend
 
 # Level 3: company/backend-api
 name: company/backend-api
-extends: company/backend
+inherits_from: company/backend
 variables:
   service_type: api
 ```
@@ -491,7 +491,7 @@ Later patterns can negate earlier patterns using `!`.
 
 ```yaml
 # content.yaml
-default_target: weftlo
+default_target: .claude
 
 targets:
   skills: .claude/skills/
@@ -507,7 +507,7 @@ Files are matched by path prefix to targets:
 |-------------|--------|----------------|
 | `skills/coding.md` | `skills` | `.claude/skills/coding.md` |
 | `commands/build.md` | `commands` | `.claude/commands/build.md` |
-| `README.md` | (default) | `weftlo/README.md` |
+| `README.md` | (default) | `.claude/README.md` |
 
 ### Target Overrides
 
@@ -585,10 +585,10 @@ variables:
 
 # Specialized profiles
 name: mycompany/backend
-extends: mycompany/base
+inherits_from: mycompany/base
 
 name: mycompany/frontend
-extends: mycompany/base
+inherits_from: mycompany/base
 ```
 
 ### 4. Keep Variables Organized
@@ -679,7 +679,7 @@ Use {{ .Variables.test_framework }} for all tests.
 **profile.yaml:**
 ```yaml
 name: mycompany/api
-extends: mycompany/base
+inherits_from: mycompany/base
 variables:
   service_name: api-gateway
 
@@ -729,7 +729,7 @@ variables:
 
 # Level 2: company/backend
 name: company/backend
-extends: company/base
+inherits_from: company/base
 variables:
   tier: backend
   languages:
@@ -738,7 +738,7 @@ variables:
 
 # Level 3: company/backend-api
 name: company/backend-api
-extends: company/backend
+inherits_from: company/backend
 variables:
   service_type: api
   frameworks:

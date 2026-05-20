@@ -50,15 +50,15 @@ type ConfigValidationError struct {
 
 func (e *ConfigValidationError) Error() string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("validation failed for configuration file %s", e.Path))
+	fmt.Fprintf(&sb, "validation failed for configuration file %s", e.Path)
 	if e.Field != "" {
-		sb.WriteString(fmt.Sprintf(": field '%s'", e.Field))
+		fmt.Fprintf(&sb, ": field '%s'", e.Field)
 	}
 	if e.Tag != "" {
-		sb.WriteString(fmt.Sprintf(" failed on '%s' validation", e.Tag))
+		fmt.Fprintf(&sb, " failed on '%s' validation", e.Tag)
 	}
 	if e.Value != "" {
-		sb.WriteString(fmt.Sprintf(" with value '%s'", e.Value))
+		fmt.Fprintf(&sb, " with value '%s'", e.Value)
 	}
 	return sb.String()
 }

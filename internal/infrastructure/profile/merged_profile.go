@@ -285,7 +285,16 @@ func (m *MergedProfile) MergeWith(other *MergedProfile) *MergedProfile {
 		other.LeafProfileName(),
 	)
 
-	// Combine conflict lists from both profiles plus new conflicts from this merge
+	// Conflicts produced by this cross-profile merge are collisions, not
+	// inheritance overrides. The domain DeepMergeVariables doesn't know which
+	// context it's being called from, so we tag here.
+	for i := range newConflicts {
+		newConflicts[i].Kind = domainprofile.ConflictKindCollision
+	}
+
+	// Combine conflict lists from both profiles plus new conflicts from this merge.
+	// Conflicts in m/other already carry their original Kind (inheritance from chain
+	// merges, or collision from prior MergeWith calls).
 	var combinedConflicts []domainprofile.VariableConflict
 	combinedConflicts = append(combinedConflicts, m.variableConflicts...)
 	combinedConflicts = append(combinedConflicts, other.variableConflicts...)

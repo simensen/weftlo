@@ -14,3 +14,7 @@ coverage.html
 
 # OS
 .DS_Store
+
+# direnv / nix
+.direnv/
+.go/

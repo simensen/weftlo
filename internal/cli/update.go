@@ -305,9 +305,18 @@ func (c *UpdateCommand) run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to load profiles: %w", err)
 	}
 
+	// Pre-flight: misplaced template files at the profile root are silently
+	// ignored by the renderer. Fail loudly here rather than report a misleading
+	// "no changes" update.
+	if profilesBase, perr := profileLoader.ProfilesBasePath(); perr == nil {
+		if verr := infraprofile.ValidateChainLayout(c.fs, profilesBase, mergedProfile.ProfileNames(), mergedProfile.ContentConfig.Root); verr != nil {
+			return verr
+		}
+	}
+
 	// Display variable conflict warnings before update begins
 	if !c.quiet {
-		displayVariableConflictWarnings(c.stdout, mergedProfile.VariableConflicts())
+		displayVariableConflictWarnings(c.stdout, mergedProfile.VariableConflicts(), c.verbose)
 	}
 
 	// Task 4.6: Construct Router using same pattern as install command
@@ -320,7 +329,7 @@ func (c *UpdateCommand) run(cmd *cobra.Command, args []string) error {
 		if globalConfig != nil && globalConfig.InstallPrefix != "" {
 			resolvedInstallPrefix = globalConfig.InstallPrefix
 		} else {
-			resolvedInstallPrefix = "weftlo"
+			resolvedInstallPrefix = domainconfig.DefaultInstallPrefix
 		}
 	}
 

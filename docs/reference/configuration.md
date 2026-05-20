@@ -35,7 +35,7 @@ Location: `~/.config/weftlo/config.yaml` (or `~/.weftlo/config.yaml`)
 default_profile: vendor/name
 
 # Default installation directory prefix
-install_prefix: weftlo
+install_prefix: .claude
 
 # Global variables (lowest precedence)
 variables:
@@ -308,7 +308,7 @@ Location: `<profile-dir>/profile.yaml`
 name: vendor/name
 
 # Parent profile for inheritance
-extends: vendor/parent
+inherits_from: vendor/parent
 
 # Profile-specific variables
 variables:
@@ -329,7 +329,7 @@ Profile identifier. Must match the directory path.
 name: mycompany/backend
 ```
 
-#### extends
+#### inherits_from
 
 **Type:** `string`
 **Required:** No
@@ -338,7 +338,7 @@ name: mycompany/backend
 Parent profile for inheritance. The child profile inherits all content, variables, and configuration from the parent.
 
 ```yaml
-extends: mycompany/base
+inherits_from: mycompany/base
 ```
 
 #### variables
@@ -362,7 +362,7 @@ variables:
 ```yaml
 # profiles/mycompany/backend/profile.yaml
 name: mycompany/backend
-extends: mycompany/base
+inherits_from: mycompany/base
 
 variables:
   tier: backend
@@ -406,7 +406,7 @@ ignore:
 The target directory for files that don't match any named target.
 
 ```yaml
-default_target: weftlo
+default_target: .claude
 ```
 
 #### targets
@@ -433,7 +433,7 @@ Files are matched to targets by their source path prefix:
 |--------|-------------|--------|
 | `skills/coding.md` | `skills` | `.claude/skills/coding.md` |
 | `commands/build.md` | `commands` | `.claude/commands/build.md` |
-| `README.md` | (default) | `weftlo/README.md` |
+| `README.md` | (default) | `.claude/README.md` |
 
 #### ignore
 

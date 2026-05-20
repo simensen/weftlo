@@ -342,14 +342,14 @@ func TestInstallCommand_WithoutForceErrorsOnExistingFiles(t *testing.T) {
 
 	// Create a command and verify FileConflictError type exists and can be used
 	conflictErr := &cli.FileConflictError{
-		ConflictingFiles: []string{"weftlo/test.md"},
+		ConflictingFiles: []string{".claude/test.md"},
 	}
 
 	errMsg := conflictErr.Error()
 	if !strings.Contains(errMsg, "conflict") {
 		t.Errorf("expected FileConflictError message to contain 'conflict', got: %s", errMsg)
 	}
-	if !strings.Contains(errMsg, "weftlo/test.md") {
+	if !strings.Contains(errMsg, ".claude/test.md") {
 		t.Errorf("expected FileConflictError message to list conflicting file, got: %s", errMsg)
 	}
 	if !strings.Contains(errMsg, "--force") {

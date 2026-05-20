@@ -40,9 +40,9 @@ func TestInitCommand_CreatesContentSubdirectory(t *testing.T) {
 	}
 }
 
-// TestInitCommand_PlacesReadmeInsideContentDirectory tests that the init command
-// places the README.md file inside the content/ subdirectory.
-func TestInitCommand_PlacesReadmeInsideContentDirectory(t *testing.T) {
+// TestInitCommand_PlacesTemplateInsideContentDirectory verifies that init
+// scaffolds the hello-world CLAUDE.md.tmpl inside content/, not at profile root.
+func TestInitCommand_PlacesTemplateInsideContentDirectory(t *testing.T) {
 	memFs := afero.NewMemMapFs()
 	homeDir := "/home/testuser"
 
@@ -56,24 +56,25 @@ func TestInitCommand_PlacesReadmeInsideContentDirectory(t *testing.T) {
 		t.Fatalf("expected no error, got: %v", err)
 	}
 
-	// Check that README.md exists inside content/
-	readmePath := filepath.Join(homeDir, ".weftlo", "profiles", "default", "default", "content", "README.md")
-	exists, err := afero.Exists(memFs, readmePath)
+	// Check that CLAUDE.md.tmpl exists inside content/
+	tmplPath := filepath.Join(homeDir, ".weftlo", "profiles", "default", "default", "content", "CLAUDE.md.tmpl")
+	exists, err := afero.Exists(memFs, tmplPath)
 	if err != nil {
-		t.Fatalf("error checking README.md existence: %v", err)
+		t.Fatalf("error checking CLAUDE.md.tmpl existence: %v", err)
 	}
 	if !exists {
-		t.Errorf("expected README.md at %s to exist", readmePath)
+		t.Errorf("expected CLAUDE.md.tmpl at %s to exist", tmplPath)
 	}
 
-	// Verify README.md does NOT exist at old location (profile root)
-	oldReadmePath := filepath.Join(homeDir, ".weftlo", "profiles", "default", "default", "README.md")
-	exists, err = afero.Exists(memFs, oldReadmePath)
+	// Verify CLAUDE.md.tmpl does NOT exist at profile root — misplaced templates
+	// outside content/ are now a hard error in install/update.
+	wrongPath := filepath.Join(homeDir, ".weftlo", "profiles", "default", "default", "CLAUDE.md.tmpl")
+	exists, err = afero.Exists(memFs, wrongPath)
 	if err != nil {
-		t.Fatalf("error checking old README.md location: %v", err)
+		t.Fatalf("error checking misplaced template location: %v", err)
 	}
 	if exists {
-		t.Errorf("expected README.md to NOT exist at old location %s", oldReadmePath)
+		t.Errorf("expected CLAUDE.md.tmpl to NOT exist at profile root %s", wrongPath)
 	}
 }
 
@@ -164,9 +165,9 @@ func TestInitCommand_SuccessOutput_ShowsContentFiles(t *testing.T) {
 		t.Errorf("expected success output to show 'content/' directory, got: %s", output)
 	}
 
-	// Check that README.md is shown inside content/
-	if !containsSubstring(output, "content/README.md") {
-		t.Errorf("expected success output to show 'content/README.md', got: %s", output)
+	// Check that CLAUDE.md.tmpl is shown inside content/
+	if !containsSubstring(output, "content/CLAUDE.md.tmpl") {
+		t.Errorf("expected success output to show 'content/CLAUDE.md.tmpl', got: %s", output)
 	}
 }
 

@@ -408,7 +408,7 @@ func TestInstallCommand_FullWorkflowWritesFilesToFilesystem(t *testing.T) {
 	}
 
 	// Verify template file was written (check for test.md in weftlo/)
-	templateOutputPath := filepath.Join(actualProjectDir, "weftlo", "test.md")
+	templateOutputPath := filepath.Join(actualProjectDir, ".claude", "test.md")
 	exists, err = afero.Exists(memFs, templateOutputPath)
 	if err != nil {
 		t.Fatalf("error checking template output: %v", err)
@@ -500,7 +500,7 @@ func TestInstallCommand_DryRunOutputsPlanWithoutWriting(t *testing.T) {
 	}
 
 	// Verify template output was NOT written
-	templateOutputPath := filepath.Join(actualProjectDir, "weftlo", "test.md")
+	templateOutputPath := filepath.Join(actualProjectDir, ".claude", "test.md")
 	exists, err = afero.Exists(memFs, templateOutputPath)
 	if err != nil {
 		t.Fatalf("error checking template output: %v", err)
