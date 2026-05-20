@@ -308,7 +308,7 @@ Location: `<profile-dir>/profile.yaml`
 name: vendor/name
 
 # Parent profile for inheritance
-extends: vendor/parent
+inherits_from: vendor/parent
 
 # Profile-specific variables
 variables:
@@ -329,7 +329,7 @@ Profile identifier. Must match the directory path.
 name: mycompany/backend
 ```
 
-#### extends
+#### inherits_from
 
 **Type:** `string`
 **Required:** No
@@ -338,7 +338,7 @@ name: mycompany/backend
 Parent profile for inheritance. The child profile inherits all content, variables, and configuration from the parent.
 
 ```yaml
-extends: mycompany/base
+inherits_from: mycompany/base
 ```
 
 #### variables
@@ -362,7 +362,7 @@ variables:
 ```yaml
 # profiles/mycompany/backend/profile.yaml
 name: mycompany/backend
-extends: mycompany/base
+inherits_from: mycompany/base
 
 variables:
   tier: backend
