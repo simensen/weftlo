@@ -37,7 +37,11 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.5
+          # v2.12 is built with go1.26; the older v2.5 pin panics with
+          # "file requires newer Go version go1.26 (application built
+          # with go1.25)" once setup-go's `stable` channel resolves to
+          # go1.26 (its analyzer binary was compiled against go1.25).
+          version: v2.12
 
       - name: Run tests
         run: go test -v ./...
